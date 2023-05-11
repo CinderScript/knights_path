@@ -3,7 +3,7 @@
 #include <map>
 #include <vector>
 #include <queue>
-#include <stack>
+#include <list>
 #include <set>
 #include <climits>
 #include <algorithm>
@@ -11,7 +11,7 @@
 using std::map;
 using std::vector;
 using std::queue;
-using std::stack;
+using std::list;
 using std::set;
 
 using std::max;
@@ -24,6 +24,13 @@ using std::max;
 using std::min_element;
 
 
+struct FunFacts{
+    vector<pair<char, int>> shortestPath;
+    size_t squaresVisited = 0;
+    size_t squareLookups = 0;
+    size_t pathMoves = 0;
+};
+
 class Chessboard {
 private:
 
@@ -31,88 +38,14 @@ private:
     map<char, vector<int>> board;
     vector<int> fileMoveSet = { 1,  1, -1, -1, 2,  2, -2, -2 };
     vector<int> rankMoveSet = { 2, -2,  2, -2, 1, -1,  1, -1 };
-    const pair<char, int> INVALID = {'*', -123};
+    const pair<char, int> INVALID = {'*', -999};
 
-public:
-
-    Chessboard() {
-        for (char file = 'a'; file <= 'h'; file++) {
-            board[file] = vector<int>(8, 0);
+    void PlotPath(vector<pair<char, int>> path) {
+        for (size_t i = 0; i < path.size(); i++) {
+            MarkSquare(path[i], i + 1);
         }
     }
-
-    void Clear(){
-        for (char file = 'a'; file <= 'h'; file++) {
-            board[file] = vector<int>(8, 0);
-        }
-    }
-
-    void PrintBoard() {
-        // Start at the top of the board -so rank 8
-        // and print each lesser rank after that.
-        for (int rank = 8; rank >= 1; rank--) {
-            cout << rank << "| ";
-
-            // print each column (file) of this rank
-            for (char file = 'a'; file <= 'h'; file++) {
-                auto square = board[file][rank - 1];
-                if (square == 0)
-                    cout << '.' << "   ";
-                else
-                    cout << square << "   ";
-            }
-
-            if ( rank > 1)
-                cout << "\n |\n";
-        }
-
-        cout << "\n   _____________________________\n   ";
-        for (char file = 'A'; file <= 'H'; file++) {
-            cout << file << "   ";
-        }
-        cout << "\n\n" << endl;
-    }
-
-    /// @brief Plot the moveset for a knight from a given square
-    /// @param fileFrom 
-    /// @param rankFrom 
-    void PlotMoveSet (char fileFrom, int rankFrom) {
-        board[fileFrom][rankFrom - 1] = 1;
-        for (size_t i = 0; i < 8; i++){
-            auto valid = PlotMove(fileFrom, rankFrom, i, i+2);
-        }
-    }
-
-    /// @brief Find shortest path information for each possible square using Dijkstra's algorithm
-    void FindDistanceToSquares(pair<char, int> start) {
-
-
-        map<char, vector<pair<char, int>>> previousMove;
-
-        Dijkstra(start, previousMove);
-    }
-
-private:
-    bool BFS(pair<char, int> start, pair<char, int> end) {
-        // initialize moveCount with infinity for all squares
-        for (char file = 'a'; file <= 'h'; file++) {
-            board[file] = vector<int>(8, INT_MAX);
-        }
-        
-        // initialize previousMove with INVALID for all squares
-        for (char file = 'a'; file <= 'h'; file++) {
-            previousMove[file] = vector<pair<char, int>>(8, INVALID);
-        }
-
-        set<pair<char, int>> visited;
-        //auto minElement = std::min_element(visited.begin(), visited.end());
-
-        // initialize the start square
-        board[start.first][start.second - 1] = 0;
-
-    }
-
-    pair<char, int> GetMove(pair<char, int> square, int move){
+    pair<char, int> GetSquare(pair<char, int> square, int move) {
         int fDelta = fileMoveSet[move];
         auto rDelta = rankMoveSet[move];
 
@@ -128,40 +61,154 @@ private:
 
         return pair<char, int>(fileTo, rankTo);
     }
-    bool PlotMove(char fileFrom, int rankFrom, int move, int value) {
-        
-        int fDelta = fileMoveSet[move];
-        auto rDelta = rankMoveSet[move];
-
-        char fileTo = fileFrom + fDelta;
-        auto rankTo = rankFrom + rDelta;
-
-        // if file is out of bounds
-        if (fileTo < 'a' || fileTo > 'h')
-            return false;
-        // if rank is out of bounds
-        if (rankTo < 1 || rankTo > 8)
-            return false;
-
-
-        board[fileTo][rankTo - 1] = value;
-        return true;
+    void MarkSquare(pair<char, int> square, int value) {
+        board[square.first][square.second - 1] = value;
     }
+
+    bool PlotMove(pair<char, int> startSquare, int move, int value) {
+
+        auto nextSquare = GetSquare(startSquare, move);
+        if (nextSquare != INVALID) {
+            MarkSquare(nextSquare, value);
+            return true;
+        }
+        return false;
+    }
+
+public:
+
+    Chessboard() {
+        Clear();
+    }
+
+    void Clear(){
+        for (char file = 'a'; file <= 'h'; file++) {
+            board[file] = vector<int>(8, -999);
+        }
+    }
+
+    void PrintBoard(bool showMoveset = false) {
+        // Start at the top of the board -so rank 8
+        // and print each lesser rank after that.
+        for (int rank = 8; rank >= 1; rank--) {
+            cout << rank << "| ";
+            // print each column (file) of this rank
+            for (char file = 'a'; file <= 'h'; file++) {
+                auto square = board[file][rank - 1];
+                if (square == -999)
+                    cout << ' ' << "   ";
+                else if (square == -1)
+                    cout << '.' << "   ";
+                else
+                    cout << square << "   ";
+            }
+            if ( rank > 1)
+                cout << "\n |\n";
+        }
+        cout << "\n   _____________________________\n   ";
+        for (char file = 'A'; file <= 'H'; file++) {
+            cout << file << "   ";
+        }
+        cout << "\n\n" << endl;
+    }
+
+
+    /// @brief Plot the moveset for a knight from a given square
+    /// @param fileFrom 
+    /// @param rankFrom 
+    void PlotMoveSet (char fileFrom, int rankFrom) {
+        board[fileFrom][rankFrom - 1] = -1;
+        for (size_t i = 0; i < 8; i++){
+            auto valid = PlotMove({fileFrom, rankFrom}, i, i+1);
+        }
+    }
+
+    FunFacts PlotShortestPath(pair<char, int> start, pair<char, int> target) {
+        FunFacts funfacts;
+        queue<pair<char, int>> potential;
+        map<pair<char, int>, pair<char, int>> history;
+        potential.push(start);
+        MarkSquare(start, -1);  // mark as visited
+
+        while (!potential.empty()) {
+
+            // process the next potential square
+            auto current = potential.front();
+
+            potential.pop();
+
+            // found it
+            if (current == target) {
+
+                while (current != start) {
+                    funfacts.shortestPath.push_back(current);
+                    current = history[current]; //backtrack
+                }
+                funfacts.shortestPath.push_back(start);
+
+                std::reverse(
+                    funfacts.shortestPath.begin(), 
+                    funfacts.shortestPath.end());
+
+                PlotPath(funfacts.shortestPath);
+
+                funfacts.pathMoves = funfacts.shortestPath.size() - 1;
+                return funfacts;
+            }
+
+            // for each possible move from this square
+            for (size_t i = 0; i < 8; i++) {
+                auto nextSquare = GetSquare(current, i);
+                funfacts.squareLookups++;
+
+                if (nextSquare != INVALID) {
+                    if (board[nextSquare.first][nextSquare.second - 1] != -1) {
+                        potential.push(nextSquare);
+                        MarkSquare(nextSquare, -1); // mark as visited
+                        history[nextSquare] = current;
+                        funfacts.squaresVisited++;
+                    }
+                }
+            }
+        }
+
+        // no path found
+        return funfacts;
+    }
+
+
 };
 
 
 int main() {
-
-    
     Chessboard chessboard;
 
     cout << "Possible moves from b2 & g7:\n";
     chessboard.PlotMoveSet('b', 2);
     chessboard.PlotMoveSet('g', 7);
     chessboard.PrintBoard();
-
     chessboard.Clear();
 
+    cout << "Running BFS on b2 to g8:\n";
+    
+    auto path = chessboard.PlotShortestPath({'b', 2}, {'g', 8});
+    chessboard.PrintBoard();
 
+    cout << "------------ Fun Facts ------------\n";
+    cout << "Path length:\t\t" << path.pathMoves << "\n";
+    cout << "Total steps:\t\t" << path.squaresVisited << "\n";
+    cout << "Total Square Lookups:\t" << path.squareLookups << "\n";
+    cout << "Path Found -\n";
+
+    for (size_t i = 0; i < path.shortestPath.size(); i++) {
+        cout << path.shortestPath[i].first << path.shortestPath[i].second;
+        if (i < path.shortestPath.size() - 1)
+            cout << " -> ";
+        if ((i + 1) % 6 == 0) 
+            cout << "\n"; 
+    }
+
+
+    cout << "\n\n" << endl;
     return 0;
 }

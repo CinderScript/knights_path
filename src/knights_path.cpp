@@ -6,6 +6,7 @@
 #include <stack>
 #include <set>
 #include <climits>
+#include <algorithm>
 
 using std::map;
 using std::vector;
@@ -20,6 +21,7 @@ using std::cout;
 using std::endl;
 using std::pair;
 using std::max;
+using std::min_element;
 
 
 class Chessboard {
@@ -103,6 +105,8 @@ private:
         }
 
         set<pair<char, int>> visited;
+
+        auto minElement = std::min_element(visited.begin(), visited.end());
     }
 
     pair<char, int> GetMove(pair<char, int> square, int move){

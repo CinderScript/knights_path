@@ -93,7 +93,7 @@ public:
     }
 
 private:
-    bool Dijkstra(pair<char, int> start, map<char, vector<pair<char, int>>>& previousMove) {
+    bool BFS(pair<char, int> start, pair<char, int> end) {
         // initialize moveCount with infinity for all squares
         for (char file = 'a'; file <= 'h'; file++) {
             board[file] = vector<int>(8, INT_MAX);
@@ -105,8 +105,11 @@ private:
         }
 
         set<pair<char, int>> visited;
+        //auto minElement = std::min_element(visited.begin(), visited.end());
 
-        auto minElement = std::min_element(visited.begin(), visited.end());
+        // initialize the start square
+        board[start.first][start.second - 1] = 0;
+
     }
 
     pair<char, int> GetMove(pair<char, int> square, int move){
